@@ -1,7 +1,7 @@
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical
-from textual.widgets import OptionList, RichLog, Static
-from textual.widgets.option_list import Option, Separator
+from textual.widgets import OptionList, RichLog
+from textual.widgets.option_list import Option
 
 
 class Sidebar(Vertical):
@@ -40,20 +40,6 @@ class MenuContainer(Vertical):
                 id=f"o{i+1}-menu",
             )
 
-        # yield OptionList(
-        #     Option("Option 1"),
-        #     Option("Option 2"),
-        #     Option("Option 3"),
-        #     Option("Option 4"),
-        #     Option("Option 5"),
-        #     Option("Option 6"),
-        #     Option("Option 7"),
-        #     Option("Option 8"),
-        #     Option("Option 9"),
-        #     classes="box",
-        #     id="o2-menu",
-        # )
-
 
 class UtilityContainers(App):
     CSS_PATH = "utility_horizontal.css"
@@ -84,10 +70,6 @@ class UtilityContainers(App):
         menu_to_show.focus()
 
         app_log.write(menu_to_show)
-
-        # result = self.query_one(f"#o{option_id}-menu")
-        # app_log.write(result)
-        # result.focus(scroll_visible=True)
 
 
 if __name__ == "__main__":

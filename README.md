@@ -5,3 +5,8 @@ This project demonstrates a simple column view navigation menu for terminal user
 ## Dependencies
 
 - [Textual](https://github.com/textualize/textual/)
+
+## TODO
+
+- [x] Focus on sub-menu when selecting an option in sidebar
+- [ ] Keep the option in sidebar highlighted when selecting and "auto-focusing" on submenu. After that, make sure the highlight colour of focused option is not same as the sidebar option.

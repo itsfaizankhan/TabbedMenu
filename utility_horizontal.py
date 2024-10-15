@@ -1,7 +1,20 @@
 from textual.app import App, ComposeResult
+from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
-from textual.widgets import Footer, OptionList, RichLog, Static
+from textual.widgets import OptionList  # as OptionL
+from textual.widgets import Footer, RichLog, Static
 from textual.widgets.option_list import Option
+
+# class OptionList(OptionL):
+#
+#     BINDINGS = [
+#         Binding("j", "cursor_down", "Move down"),
+#         Binding("k", "cursor_up", "Move up"),
+#         # Binding("right", "focus_next", "Move focus to the next widget"),
+#         # Binding("left", "focus_previous", "Move focus to the previous widget"),
+#         # Binding("l", "focus_next", "Focus Next", show=False, priority=True),
+#         # Binding("h", "focus_previous", "Focus Previous", show=False, priority=True),
+#     ]
 
 
 class Sidebar(Vertical):
@@ -40,7 +53,7 @@ class SubMenu(Static):
             Option(f"Menu {self.menu_id} Option 8"),
             Option(f"Menu {self.menu_id} Option 9"),
             classes="box",
-            id=f"o{self.menu_id}-menu",
+            id=f"{self.menu_id}-menu",
         )
 
 
@@ -79,10 +92,16 @@ class UtilityContainers(App):
         app_log.write("After remove & before mount: ")
         app_log.write(submenu_container.children)
 
-        submenu_container.mount(SubMenu(menu_id=f"o{option_id}", id=f"o{option_id}"))
+        new_id = f"o{option_id}"
+        new_submenu = SubMenu(menu_id=new_id, id=new_id)
+        await submenu_container.mount(new_submenu)
+
+        new_submenu = submenu_container.query("OptionList").first()
+        new_submenu.focus()
 
         app_log.write("After mount: ")
         app_log.write(submenu_container.children)
+        app_log.write(new_submenu)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,19 @@
 .box {
   content-align: center middle;
-  border: solid green;
+  /*border: round $accent;*/
   height: 1fr;
+}
+
+Sidebar, SubMenu {
+  border: round $accent;
+}
+
+OptionList {
+  border: blank;
+}
+
+.current-menu {
+  background: #387478;
 }
 
 .column {

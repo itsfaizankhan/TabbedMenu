@@ -1,20 +1,22 @@
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
-from textual.widgets import OptionList  # as OptionL
-from textual.widgets import Footer, RichLog, Static
+from textual.widgets import Footer
+from textual.widgets import OptionList as OptionL
+from textual.widgets import RichLog, Static
 from textual.widgets.option_list import Option
 
-# class OptionList(OptionL):
-#
-#     BINDINGS = [
-#         Binding("j", "cursor_down", "Move down"),
-#         Binding("k", "cursor_up", "Move up"),
-#         # Binding("right", "focus_next", "Move focus to the next widget"),
-#         # Binding("left", "focus_previous", "Move focus to the previous widget"),
-#         # Binding("l", "focus_next", "Focus Next", show=False, priority=True),
-#         # Binding("h", "focus_previous", "Focus Previous", show=False, priority=True),
-#     ]
+SIDEBAR_OPTIONS = [Option(f"Menu {i}", id=str(i)) for i in range(1, 10)]
+
+
+class OptionList(OptionL):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    BINDINGS = [
+        Binding("k", "cursor_up", "Move up"),
+        Binding("j", "cursor_down", "Move down"),
+    ]
 
 
 class Sidebar(Vertical):
@@ -22,15 +24,7 @@ class Sidebar(Vertical):
 
     def compose(self) -> ComposeResult:
         yield OptionList(
-            Option("Menu 1", id="1"),
-            Option("Menu 2", id="2"),
-            Option("Menu 3", id="3"),
-            Option("Menu 4", id="4"),
-            Option("Menu 5", id="5"),
-            Option("Menu 6", id="6"),
-            Option("Menu 7", id="7"),
-            Option("Menu 8", id="8"),
-            Option("Menu 9", id="9"),
+            *SIDEBAR_OPTIONS,
             classes="box",
             id="sidebar",
         )
@@ -41,17 +35,13 @@ class SubMenu(Static):
         super().__init__(*args, **kwargs)
         self.menu_id = menu_id
 
+        self.SUBMENU_OPTIONS = [
+            Option(f"Menu {self.menu_id} Option {str(i)}") for i in range(1, 10)
+        ]
+
     def compose(self) -> ComposeResult:
         yield OptionList(
-            Option(f"Menu {self.menu_id} Option 1"),
-            Option(f"Menu {self.menu_id} Option 2"),
-            Option(f"Menu {self.menu_id} Option 3"),
-            Option(f"Menu {self.menu_id} Option 4"),
-            Option(f"Menu {self.menu_id} Option 5"),
-            Option(f"Menu {self.menu_id} Option 6"),
-            Option(f"Menu {self.menu_id} Option 7"),
-            Option(f"Menu {self.menu_id} Option 8"),
-            Option(f"Menu {self.menu_id} Option 9"),
+            *self.SUBMENU_OPTIONS,
             classes="box",
             id=f"{self.menu_id}-menu",
         )
@@ -60,10 +50,19 @@ class SubMenu(Static):
 class UtilityContainers(App):
     CSS_PATH = "utility_horizontal.css"
 
+    BINDINGS = [
+        Binding("left", "focus_previous('*')", "Move back"),
+        Binding("backspace", "focus_previous('box')", "Go to previous menu", show=True),
+    ]
+
     def compose(self) -> ComposeResult:
         with Horizontal():
             yield Sidebar(classes="column")
-            yield Vertical(id="submenu-container", classes="column")
+            yield Vertical(
+                SubMenu(menu_id="o1", id="o1"),
+                id="submenu-container",
+                classes="column",
+            )
             yield RichLog(highlight=True, markup=True)
             yield Footer()
 
@@ -72,36 +71,56 @@ class UtilityContainers(App):
     ) -> None:
         """Event handler called when an option in OptionList is selected."""
         option_id = event.option.id
-        app_log = self.query_one(RichLog)
+        # app_log = self.query_one(RichLog).write
 
-        if not option_id or len(option_id) >= 2:
-            if option_id:
-                app_log.write("option_id: " + option_id)
+        # NOTE: The condition `or len(option_id) >= 4` can be used below condition to handle nested
+        # submenus, where the length of `option_id` increases with each deeper submenu level.
+        # The value compared with `option_id` length should correspond to the number of
+        # submenu levels to prevent empty submenus. Though not thoroughly tested, this has
+        # been observed to cause empty submenus when a great number of menus are created on the same level.
+        if not option_id:
             return
 
-        app_log.write(option_id)
+        # app_log(option_id)
+
+        # ==== Handeling mount and removal of SubMenu. ====
         submenu_container = self.query("#submenu-container").last()
 
+        # Remove any submenu widget in the Vertical widget.
         if submenu_container:
-            app_log.write("Before remove: ")
-            app_log.write(submenu_container.children)
+            # app_log("Before remove: ")
+            # app_log(submenu_container.children)
             if len(submenu_container.children) != 0:
                 await submenu_container.remove_children("*")
 
         submenu_container = self.query("#submenu-container").last()
-        app_log.write("After remove & before mount: ")
-        app_log.write(submenu_container.children)
+        # app_log("Before mount: ")
+        # app_log(submenu_container.children)
+
+        # Mount (add) the submenu corresponding to the selected sidebar option.
+        try:
+            selected_option_name = (
+                self.query("#sidebar").last().get_option(option_id).prompt
+            )
+            # app_log("Selected option was:")
+            # app_log(selected_option_name)
+        except Exception as e:
+            self.notify(e.__str__(), severity="error")
 
         new_id = f"o{option_id}"
         new_submenu = SubMenu(menu_id=new_id, id=new_id)
+        if selected_option_name:
+            new_submenu.border_title = selected_option_name
+
         await submenu_container.mount(new_submenu)
 
+        # Change focus from sidebar OptionList to the newly mounted submenu.
         new_submenu = submenu_container.query("OptionList").first()
         new_submenu.focus()
 
-        app_log.write("After mount: ")
-        app_log.write(submenu_container.children)
-        app_log.write(new_submenu)
+        # app_log("After mount: ")
+        # app_log(submenu_container.children)
+        # app_log(new_submenu)
 
 
 if __name__ == "__main__":
